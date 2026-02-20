@@ -5,6 +5,7 @@ import 'package:re_mem_ui/features/cards/data/repositories/card_repository_impl.
 import 'package:re_mem_ui/features/cards/domain/repositories/card_repository.dart';
 import 'package:re_mem_ui/features/cards/domain/use_cases/create_card.dart';
 import 'package:re_mem_ui/features/cards/domain/use_cases/get_cards.dart';
+import 'package:re_mem_ui/features/cards/domain/use_cases/submit_review.dart';
 
 /// Provides the [CardRepository] implementation.
 final cardRepositoryProvider = Provider<CardRepository>((ref) {
@@ -19,4 +20,9 @@ final getCardsUseCaseProvider = Provider<GetCardsUseCase>((ref) {
 /// Provides the [CreateCardUseCase].
 final createCardUseCaseProvider = Provider<CreateCardUseCase>((ref) {
   return CreateCardUseCase(ref.watch(cardRepositoryProvider));
+});
+
+/// Provides the [SubmitReviewUseCase].
+final submitReviewUseCaseProvider = Provider<SubmitReviewUseCase>((ref) {
+  return SubmitReviewUseCase(ref.watch(cardRepositoryProvider));
 });

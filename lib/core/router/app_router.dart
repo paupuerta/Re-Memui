@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/cards/domain/entities/card.dart' as entities;
+import '../../features/cards/presentation/screens/review_card_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -11,6 +13,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/',
         name: 'home',
         builder: (context, state) => const HomeScreen(),
+      ),
+      GoRoute(
+        path: '/review',
+        name: 'review',
+        builder: (context, state) {
+          final card = state.extra as Map<String, dynamic>;
+          return ReviewCardScreen(
+            card: card['card'] as entities.Card,
+            userId: card['userId'] as String,
+          );
+        },
       ),
     ],
   );

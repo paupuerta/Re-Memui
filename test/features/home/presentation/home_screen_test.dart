@@ -13,10 +13,12 @@ void main() {
       );
 
       expect(find.text('ReMem'), findsOneWidget);
+      expect(find.text('Welcome to ReMem'), findsOneWidget);
       expect(
-        find.text('Welcome to ReMem ? your language learning companion.'),
+        find.text('Your language learning companion'),
         findsOneWidget,
       );
+      expect(find.text('Try Demo Review'), findsOneWidget);
     });
   });
 }

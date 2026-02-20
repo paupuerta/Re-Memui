@@ -5,6 +5,7 @@ import 'package:re_mem_ui/core/error/failure.dart';
 import 'package:re_mem_ui/core/error/result.dart';
 import 'package:re_mem_ui/core/network/api_client.dart';
 import 'package:re_mem_ui/features/cards/domain/entities/card.dart';
+import 'package:re_mem_ui/features/cards/domain/entities/review_result.dart';
 import 'package:re_mem_ui/features/cards/domain/repositories/card_repository.dart';
 
 /// Remote implementation of [CardRepository].
@@ -65,6 +66,34 @@ class CardRepositoryImpl implements CardRepository {
         userId: json['user_id'] as String,
         question: json['question'] as String,
         answer: json['answer'] as String,
+      ));
+    } on DioException catch (e) {
+      return Left(_mapDioError(e));
+    }
+  }
+
+  @override
+  AsyncResult<ReviewResult> submitReview({
+    required String cardId,
+    required String userId,
+    required String userAnswer,
+  }) async {
+    try {
+      final response = await _apiClient.post(
+        '/reviews',
+        data: {
+          'card_id': cardId,
+          'user_id': userId,
+          'user_answer': userAnswer,
+        },
+      );
+      final json = response.data as Map<String, dynamic>;
+      return Right(ReviewResult(
+        cardId: json['card_id'] as String,
+        aiScore: (json['ai_score'] as num).toDouble(),
+        fsrsRating: json['fsrs_rating'] as int,
+        validationMethod: json['validation_method'] as String,
+        nextReviewInDays: json['next_review_in_days'] as int,
       ));
     } on DioException catch (e) {
       return Left(_mapDioError(e));
