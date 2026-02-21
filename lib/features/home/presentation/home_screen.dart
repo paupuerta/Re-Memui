@@ -1,14 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:re_mem_ui/features/cards/domain/entities/card.dart'
-    as entities;
+
+import 'package:re_mem_ui/features/cards/presentation/providers/card_providers.dart';
+
+// TODO: replace with authenticated user ID once auth is implemented
+const _testUserId = 'ae87b4cc-5a57-471b-9740-837f3440db6c';
+
+/// Async provider that loads all cards for the current user.
+final _userCardsProvider = FutureProvider.autoDispose((ref) async {
+  final useCase = ref.watch(getCardsUseCaseProvider);
+  final result = await useCase(_testUserId);
+  return result.fold(
+    (failure) => throw failure,
+    (cards) => cards,
+  );
+});
 
 /// Home screen – entry point for the app.
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final cardsAsync = ref.watch(_userCardsProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('ReMem'),
@@ -28,30 +44,53 @@ class HomeScreen extends StatelessWidget {
               style: TextStyle(fontSize: 16, color: Colors.grey),
             ),
             const SizedBox(height: 40),
-            FilledButton.icon(
-              onPressed: () {
-                // Demo card for testing
-                const demoCard = entities.Card(
-                  id: '123e4567-e89b-12d3-a456-426614174000',
-                  userId: '123e4567-e89b-12d3-a456-426614174001',
-                  question: 'What is "hello" in Spanish?',
-                  answer: 'hola',
-                );
-
-                context.pushNamed(
-                  'review',
-                  extra: {
-                    'card': demoCard,
-                    'userId': demoCard.userId,
-                  },
-                );
-              },
-              icon: const Icon(Icons.play_arrow),
-              label: const Text('Try Demo Review'),
-              style: FilledButton.styleFrom(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                textStyle: const TextStyle(fontSize: 16),
+            cardsAsync.when(
+              loading: () => const CircularProgressIndicator(),
+              error: (err, _) => Column(
+                children: [
+                  const Icon(Icons.error_outline, color: Colors.red, size: 40),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Failed to load cards',
+                    style: TextStyle(color: Colors.red[700]),
+                  ),
+                  const SizedBox(height: 8),
+                  TextButton.icon(
+                    onPressed: () => ref.invalidate(_userCardsProvider),
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Retry'),
+                  ),
+                ],
+              ),
+              data: (cards) => Column(
+                children: [
+                  Text(
+                    '${cards.length} card${cards.length == 1 ? '' : 's'} ready',
+                    style: const TextStyle(fontSize: 16, color: Colors.grey),
+                  ),
+                  const SizedBox(height: 16),
+                  FilledButton.icon(
+                    onPressed: cards.isEmpty
+                        ? null
+                        : () {
+                            context.pushNamed(
+                              'review',
+                              extra: {
+                                'cards': cards,
+                                'index': 0,
+                                'userId': _testUserId,
+                              },
+                            );
+                          },
+                    icon: const Icon(Icons.play_arrow),
+                    label: const Text('Start Review'),
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 32, vertical: 16),
+                      textStyle: const TextStyle(fontSize: 16),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:re_mem_ui/features/cards/domain/entities/card.dart'
     as entities;
 import 'package:re_mem_ui/features/cards/presentation/providers/card_providers.dart';
@@ -10,11 +11,15 @@ class ReviewCardScreen extends ConsumerStatefulWidget {
   const ReviewCardScreen({
     required this.card,
     required this.userId,
+    required this.cards,
+    required this.currentIndex,
     super.key,
   });
 
   final entities.Card card;
   final String userId;
+  final List<entities.Card> cards;
+  final int currentIndex;
 
   @override
   ConsumerState<ReviewCardScreen> createState() => _ReviewCardScreenState();
@@ -25,6 +30,24 @@ class _ReviewCardScreenState extends ConsumerState<ReviewCardScreen> {
   bool _isSubmitting = false;
   String? _resultMessage;
   bool _showResult = false;
+
+  bool get _hasNextCard =>
+      widget.currentIndex < widget.cards.length - 1;
+
+  void _onNextCard() {
+    if (_hasNextCard) {
+      context.pushReplacementNamed(
+        'review',
+        extra: {
+          'cards': widget.cards,
+          'index': widget.currentIndex + 1,
+          'userId': widget.userId,
+        },
+      );
+    } else {
+      context.pop();
+    }
+  }
 
   @override
   void dispose() {
@@ -215,9 +238,11 @@ Next review in: ${reviewResult.nextReviewInDays} days
                   const SizedBox(width: 12),
                   Expanded(
                     child: FilledButton.icon(
-                      onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.arrow_back),
-                      label: const Text('Back'),
+                      onPressed: _onNextCard,
+                      icon: Icon(
+                        _hasNextCard ? Icons.arrow_forward : Icons.check,
+                      ),
+                      label: Text(_hasNextCard ? 'Next Card' : 'Finish'),
                     ),
                   ),
                 ],

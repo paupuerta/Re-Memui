@@ -2,7 +2,7 @@ import 'package:dio/dio.dart';
 
 /// Constants for the API configuration.
 abstract final class ApiConstants {
-  static const String baseUrl = 'http://localhost:3000/api/v1';
+  static const String baseUrl = 'http://localhost:3000';
 }
 
 /// Thin wrapper around [Dio] for API calls.

@@ -80,7 +80,7 @@ class CardRepositoryImpl implements CardRepository {
   }) async {
     try {
       final response = await _apiClient.post(
-        '/reviews',
+        '/api/v1/reviews',
         data: {
           'card_id': cardId,
           'user_id': userId,

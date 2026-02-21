@@ -43,7 +43,7 @@ flutter test
 
 ## Project Structure
 
-```
+```text
 lib/
 ├── main.dart              # Entry point
 ├── app.dart               # App configuration

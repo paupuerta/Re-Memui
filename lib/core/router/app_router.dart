@@ -18,10 +18,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/review',
         name: 'review',
         builder: (context, state) {
-          final card = state.extra as Map<String, dynamic>;
+          final extra = state.extra as Map<String, dynamic>;
+          final cards = extra['cards'] as List<entities.Card>? ?? [extra['card'] as entities.Card];
+          final index = extra['index'] as int? ?? 0;
           return ReviewCardScreen(
-            card: card['card'] as entities.Card,
-            userId: card['userId'] as String,
+            card: cards[index],
+            userId: extra['userId'] as String,
+            cards: cards,
+            currentIndex: index,
           );
         },
       ),
