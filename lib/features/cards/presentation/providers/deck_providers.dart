@@ -4,6 +4,7 @@ import 'package:re_mem_ui/core/network/network_providers.dart';
 import 'package:re_mem_ui/features/cards/data/repositories/deck_repository_impl.dart';
 import 'package:re_mem_ui/features/cards/domain/repositories/deck_repository.dart';
 import 'package:re_mem_ui/features/cards/domain/use_cases/create_deck.dart';
+import 'package:re_mem_ui/features/cards/domain/use_cases/delete_deck.dart';
 import 'package:re_mem_ui/features/cards/domain/use_cases/get_decks.dart';
 
 /// Provides the [DeckRepository] implementation.
@@ -19,4 +20,9 @@ final getDecksUseCaseProvider = Provider<GetDecks>((ref) {
 /// Provides the [CreateDeck] use case.
 final createDeckUseCaseProvider = Provider<CreateDeck>((ref) {
   return CreateDeck(ref.watch(deckRepositoryProvider));
+});
+
+/// Provides the [DeleteDeck] use case.
+final deleteDeckUseCaseProvider = Provider<DeleteDeck>((ref) {
+  return DeleteDeck(ref.watch(deckRepositoryProvider));
 });

@@ -19,4 +19,8 @@ abstract interface class CardRepository {
     required String userId,
     required String userAnswer,
   });
+  AsyncResult<void> deleteCard({
+    required String userId,
+    required String cardId,
+  });
 }

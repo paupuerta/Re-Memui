@@ -23,5 +23,8 @@ abstract class DeckRepository {
   });
 
   /// Deletes a deck
-  Future<void> deleteDeck(String deckId);
+  Future<void> deleteDeck({
+    required String userId,
+    required String deckId,
+  });
 }
