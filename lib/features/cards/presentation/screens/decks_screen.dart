@@ -175,6 +175,60 @@ class _DeckCard extends ConsumerWidget {
   final Deck deck;
   final VoidCallback onTap;
 
+  Future<void> _deleteDeck(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Deck'),
+        content: Text(
+          'Are you sure you want to delete "${deck.name}"?\n\nCards in this deck will not be deleted, they will be moved to "No Deck".',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !context.mounted) return;
+
+    final userId = 'ae87b4cc-5a57-471b-9740-837f3440db6c';
+    final deleteDeck = ref.read(deleteDeckUseCaseProvider);
+
+    final result = await deleteDeck(userId: userId, deckId: deck.id);
+
+    result.fold(
+      (failure) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to delete deck: $failure'),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+          );
+        }
+      },
+      (_) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Deck "${deck.name}" deleted'),
+            ),
+          );
+        }
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Dismissible(
@@ -192,58 +246,7 @@ class _DeckCard extends ConsumerWidget {
           color: Theme.of(context).colorScheme.onError,
         ),
       ),
-      confirmDismiss: (direction) async {
-        return await showDialog<bool>(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Delete Deck'),
-            content: Text(
-              'Are you sure you want to delete "${deck.name}"?\n\nCards in this deck will not be deleted, they will be moved to "No Deck".',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                child: const Text('Cancel'),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.of(context).pop(true),
-                style: FilledButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.error,
-                ),
-                child: const Text('Delete'),
-              ),
-            ],
-          ),
-        );
-      },
-      onDismissed: (direction) async {
-        final userId = 'ae87b4cc-5a57-471b-9740-837f3440db6c';
-        final deleteDeck = ref.read(deleteDeckUseCaseProvider);
-        
-        final result = await deleteDeck(userId: userId, deckId: deck.id);
-        
-        result.fold(
-          (failure) {
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Failed to delete deck: $failure'),
-                  backgroundColor: Theme.of(context).colorScheme.error,
-                ),
-              );
-            }
-          },
-          (_) {
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Deck "${deck.name}" deleted'),
-                ),
-              );
-            }
-          },
-        );
-      },
+      confirmDismiss: (direction) => _deleteDeck(context, ref).then((_) => true),
       child: Card(
         margin: const EdgeInsets.only(bottom: 12),
         child: InkWell(
@@ -268,6 +271,14 @@ class _DeckCard extends ConsumerWidget {
                               fontWeight: FontWeight.bold,
                             ),
                       ),
+                    ),
+                    IconButton(
+                      icon: Icon(
+                        Icons.delete_outline,
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                      onPressed: () => _deleteDeck(context, ref),
+                      tooltip: 'Delete deck',
                     ),
                     Icon(
                       Icons.chevron_right,
