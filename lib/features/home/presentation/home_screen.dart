@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:re_mem_ui/features/cards/presentation/providers/card_providers.dart';
+import 'package:re_mem_ui/features/cards/presentation/screens/decks_screen.dart';
 
 // TODO: replace with authenticated user ID once auth is implemented
 const _testUserId = 'ae87b4cc-5a57-471b-9740-837f3440db6c';
@@ -29,6 +30,20 @@ class HomeScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('ReMem'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.style),
+            tooltip: 'My Decks',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const DecksScreen(userId: _testUserId),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: Center(
         child: Column(
@@ -90,6 +105,25 @@ class HomeScreen extends ConsumerWidget {
                       textStyle: const TextStyle(fontSize: 16),
                     ),
                   ),
+                  const SizedBox(height: 16),
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              const DecksScreen(userId: _testUserId),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.style),
+                    label: const Text('Manage Decks'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 32, vertical: 16),
+                      textStyle: const TextStyle(fontSize: 16),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -99,4 +133,3 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 }
-

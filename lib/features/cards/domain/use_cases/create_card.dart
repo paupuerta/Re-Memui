@@ -13,10 +13,12 @@ class CreateCardUseCase {
     required String userId,
     required String question,
     required String answer,
+    String? deckId,
   }) =>
       _repository.createCard(
         userId: userId,
         question: question,
         answer: answer,
+        deckId: deckId,
       );
 }

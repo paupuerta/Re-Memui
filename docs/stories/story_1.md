@@ -23,7 +23,7 @@ This story implements the Flutter UI for AI-powered flashcard review with beauti
 
 **Clean Architecture** with feature-based structure:
 
-```
+```dart
 lib/features/cards/
 ├── domain/
 │   ├── entities/           # Pure Dart models
@@ -42,6 +42,7 @@ lib/features/cards/
 #### Entities
 
 **ReviewResult** - Result of AI validation:
+
 ```dart
 class ReviewResult {
   const ReviewResult({
@@ -61,6 +62,7 @@ class ReviewResult {
 ```
 
 **Card** - Existing entity (no changes needed):
+
 ```dart
 class Card {
   const Card({
@@ -80,6 +82,7 @@ class Card {
 #### Repository Interface
 
 **CardRepository** - Extended with review submission:
+
 ```dart
 abstract interface class CardRepository {
   AsyncResult<List<Card>> getCards(String userId);
@@ -104,6 +107,7 @@ abstract interface class CardRepository {
 #### Repository Implementation
 
 **CardRepositoryImpl.submitReview**:
+
 ```dart
 @override
 AsyncResult<ReviewResult> submitReview({
@@ -142,6 +146,7 @@ AsyncResult<ReviewResult> submitReview({
 #### Use Case
 
 **SubmitReviewUseCase**:
+
 ```dart
 class SubmitReviewUseCase {
   const SubmitReviewUseCase(this._repository);
@@ -184,6 +189,7 @@ class FlashcardWidget extends StatefulWidget {
 ```
 
 **Features**:
+
 - ✅ 3D flip animation (600ms duration)
 - ✅ Smooth easeInOut curve
 - ✅ Perspective transform (rotateY)
@@ -192,6 +198,7 @@ class FlashcardWidget extends StatefulWidget {
 - ✅ Responsive design with Material 3
 
 **Animation Details**:
+
 ```dart
 // Controller setup
 _controller = AnimationController(
@@ -250,10 +257,10 @@ class ReviewCardScreen extends ConsumerStatefulWidget {
 4. **Result Display**
    - AI Score percentage (95% = 1.0)
    - FSRS Rating with emoji:
-     * 4 = Easy ✨
-     * 3 = Good ✓
-     * 2 = Hard 💪
-     * 1 = Again 🔄
+     - 4 = Easy ✨
+     - 3 = Good ✓
+     - 2 = Hard 💪
+     - 1 = Again 🔄
    - Validation method (exact/embedding/llm)
    - Next review in X days
 
@@ -262,6 +269,7 @@ class ReviewCardScreen extends ConsumerStatefulWidget {
    - "Back" button (FilledButton)
 
 **State Management**:
+
 ```dart
 // Local state
 bool _isSubmitting = false;
@@ -279,6 +287,7 @@ final result = await useCase(
 ```
 
 **Error Handling**:
+
 ```dart
 result.fold(
   (failure) {
@@ -303,6 +312,7 @@ result.fold(
 #### Routing
 
 **App Router** - Added review route:
+
 ```dart
 GoRoute(
   path: '/review',
@@ -318,6 +328,7 @@ GoRoute(
 ```
 
 **Type-Safe Navigation**:
+
 ```dart
 context.pushNamed(
   'review',
@@ -331,6 +342,7 @@ context.pushNamed(
 #### Providers
 
 **Riverpod Providers**:
+
 ```dart
 // Repository
 final cardRepositoryProvider = Provider<CardRepository>((ref) {
@@ -346,6 +358,7 @@ final submitReviewUseCaseProvider = Provider<SubmitReviewUseCase>((ref) {
 #### Home Screen Integration
 
 **Demo Button**:
+
 ```dart
 FilledButton.icon(
   onPressed: () {
@@ -373,7 +386,7 @@ FilledButton.icon(
 
 ### Created Files
 
-```
+```dart
 lib/features/cards/domain/entities/review_result.dart
 lib/features/cards/domain/use_cases/submit_review.dart
 lib/features/cards/presentation/screens/review_card_screen.dart
@@ -383,7 +396,7 @@ test/features/cards/domain/use_cases/submit_review_test.dart
 
 ### Modified Files
 
-```
+```dart
 lib/features/cards/domain/repositories/card_repository.dart
 lib/features/cards/data/repositories/card_repository_impl.dart
 lib/features/cards/presentation/providers/card_providers.dart
@@ -395,6 +408,7 @@ test/features/home/presentation/home_screen_test.dart
 ## Dependencies
 
 No new dependencies added! Using existing:
+
 ```yaml
 dependencies:
   flutter_riverpod: ^3.2.1  # State management
@@ -428,6 +442,7 @@ dev_dependencies:
    - Checks validation method
 
 **Test Structure**:
+
 ```dart
 void main() {
   late SubmitReviewUseCase useCase;
@@ -454,6 +469,7 @@ void main() {
 ```
 
 **Widget Tests**:
+
 - Updated HomeScreen test to check for new button
 
 ### Running Tests
@@ -463,7 +479,8 @@ flutter test
 ```
 
 **Output**:
-```
+
+```dart
 00:02 +13: All tests passed!
 ```
 
@@ -505,7 +522,7 @@ flutter test
 
 ## User Flow
 
-```
+```dart
 1. Home Screen
    ↓ (Tap "Try Demo Review")
 2. Review Card Screen
@@ -542,6 +559,7 @@ abstract final class ApiConstants {
 ### Request/Response Format
 
 **Request**:
+
 ```json
 {
   "card_id": "123e4567-e89b-12d3-a456-426614174000",
@@ -551,6 +569,7 @@ abstract final class ApiConstants {
 ```
 
 **Response**:
+
 ```json
 {
   "card_id": "123e4567-e89b-12d3-a456-426614174000",
@@ -564,12 +583,14 @@ abstract final class ApiConstants {
 ### Error Handling
 
 **Network Errors**:
+
 - Connection timeout → NetworkFailure → Red snackbar
 - 404 Not Found → NotFoundFailure → Error message
 - 400 Bad Request → ValidationFailure → Error message
 - 500 Server Error → ServerFailure → Generic error
 
 **User Feedback**:
+
 ```dart
 ScaffoldMessenger.of(context).showSnackBar(
   SnackBar(
@@ -626,18 +647,21 @@ ScaffoldMessenger.of(context).showSnackBar(
 ## Future Enhancements
 
 ### Short Term
+
 - [ ] Add loading skeleton for flashcard
 - [ ] Haptic feedback on flip
 - [ ] Success animation (confetti for perfect scores)
 - [ ] Error retry logic
 
 ### Medium Term
+
 - [ ] Offline mode with local storage
 - [ ] Review history screen
 - [ ] Statistics and analytics
 - [ ] Customizable themes
 
 ### Long Term
+
 - [ ] Gamification (streaks, badges)
 - [ ] Social features (share cards)
 - [ ] Voice input for answers
@@ -682,16 +706,19 @@ ScaffoldMessenger.of(context).showSnackBar(
 ## Testing Strategy
 
 ### Unit Tests
+
 ✅ Use case logic  
 ✅ Repository implementations (mocked)  
 ✅ Entity creation  
 
 ### Widget Tests
+
 ✅ Screen rendering  
 ✅ Button interactions  
 ✅ Text display  
 
 ### Integration Tests (Future)
+
 ⏳ End-to-end flow  
 ⏳ API integration  
 ⏳ Navigation flow  
