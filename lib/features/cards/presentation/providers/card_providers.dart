@@ -4,6 +4,7 @@ import 'package:re_mem_ui/core/network/network_providers.dart';
 import 'package:re_mem_ui/features/cards/data/repositories/card_repository_impl.dart';
 import 'package:re_mem_ui/features/cards/domain/repositories/card_repository.dart';
 import 'package:re_mem_ui/features/cards/domain/use_cases/create_card.dart';
+import 'package:re_mem_ui/features/cards/domain/use_cases/delete_card.dart';
 import 'package:re_mem_ui/features/cards/domain/use_cases/get_cards.dart';
 import 'package:re_mem_ui/features/cards/domain/use_cases/submit_review.dart';
 
@@ -25,4 +26,9 @@ final createCardUseCaseProvider = Provider<CreateCardUseCase>((ref) {
 /// Provides the [SubmitReviewUseCase].
 final submitReviewUseCaseProvider = Provider<SubmitReviewUseCase>((ref) {
   return SubmitReviewUseCase(ref.watch(cardRepositoryProvider));
+});
+
+/// Provides the [DeleteCard] use case.
+final deleteCardUseCaseProvider = Provider<DeleteCard>((ref) {
+  return DeleteCard(ref.watch(cardRepositoryProvider));
 });

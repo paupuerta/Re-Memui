@@ -73,9 +73,12 @@ class DeckRepositoryImpl implements DeckRepository {
   }
 
   @override
-  Future<void> deleteDeck(String deckId) async {
+  Future<void> deleteDeck({
+    required String userId,
+    required String deckId,
+  }) async {
     try {
-      await _apiClient.delete('/decks/$deckId');
+      await _apiClient.delete('/users/$userId/decks/$deckId');
     } on DioException catch (e) {
       throw _mapDioError(e);
     }

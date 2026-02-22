@@ -128,6 +128,19 @@ class CardRepositoryImpl implements CardRepository {
     }
   }
 
+  @override
+  AsyncResult<void> deleteCard({
+    required String userId,
+    required String cardId,
+  }) async {
+    try {
+      await _apiClient.delete('/users/$userId/cards/$cardId');
+      return const Right(null);
+    } on DioException catch (e) {
+      return Left(_mapDioError(e));
+    }
+  }
+
   Failure _mapDioError(DioException e) {
     return switch (e.response?.statusCode) {
       404 => const NotFoundFailure(),
