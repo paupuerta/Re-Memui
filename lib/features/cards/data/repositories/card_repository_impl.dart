@@ -23,6 +23,27 @@ class CardRepositoryImpl implements CardRepository {
           .map((json) => Card(
                 id: json['id'] as String,
                 userId: json['user_id'] as String,
+                deckId: json['deck_id'] as String?,
+                question: json['question'] as String,
+                answer: json['answer'] as String,
+              ))
+          .toList();
+      return Right(cards);
+    } on DioException catch (e) {
+      return Left(_mapDioError(e));
+    }
+  }
+
+  @override
+  AsyncResult<List<Card>> getCardsByDeck(String deckId) async {
+    try {
+      final response = await _apiClient.get('/decks/$deckId/cards');
+      final data = response.data as List<dynamic>;
+      final cards = data
+          .map((json) => Card(
+                id: json['id'] as String,
+                userId: json['user_id'] as String,
+                deckId: json['deck_id'] as String?,
                 question: json['question'] as String,
                 answer: json['answer'] as String,
               ))
@@ -41,6 +62,7 @@ class CardRepositoryImpl implements CardRepository {
       return Right(Card(
         id: json['id'] as String,
         userId: json['user_id'] as String,
+        deckId: json['deck_id'] as String?,
         question: json['question'] as String,
         answer: json['answer'] as String,
       ));
@@ -54,16 +76,22 @@ class CardRepositoryImpl implements CardRepository {
     required String userId,
     required String question,
     required String answer,
+    String? deckId,
   }) async {
     try {
       final response = await _apiClient.post(
         '/users/$userId/cards',
-        data: {'question': question, 'answer': answer},
+        data: {
+          'question': question,
+          'answer': answer,
+          if (deckId != null) 'deck_id': deckId,
+        },
       );
       final json = response.data as Map<String, dynamic>;
       return Right(Card(
         id: json['id'] as String,
         userId: json['user_id'] as String,
+        deckId: json['deck_id'] as String?,
         question: json['question'] as String,
         answer: json['answer'] as String,
       ));
