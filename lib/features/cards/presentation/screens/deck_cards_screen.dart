@@ -323,6 +323,7 @@ class _CardListItem extends ConsumerWidget {
           ),
         ),
       ),
+    ),
     );
   }
 }
