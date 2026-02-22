@@ -1,7 +1,5 @@
-import 'package:equatable/equatable.dart';
-
 /// Deck entity - represents a collection of cards
-class Deck extends Equatable {
+class Deck {
   final String id;
   final String userId;
   final String name;
@@ -17,9 +15,6 @@ class Deck extends Equatable {
     required this.createdAt,
     required this.updatedAt,
   });
-
-  @override
-  List<Object?> get props => [id, userId, name, description, createdAt, updatedAt];
 
   factory Deck.fromJson(Map<String, dynamic> json) {
     return Deck(

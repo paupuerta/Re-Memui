@@ -1,4 +1,4 @@
-import 'package:dartz/dartz.dart';
+import 'package:fpdart/fpdart.dart';
 import '../entities/deck.dart';
 import '../repositories/deck_repository.dart';
 
