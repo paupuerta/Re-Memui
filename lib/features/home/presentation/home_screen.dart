@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import 'package:re_mem_ui/features/cards/presentation/providers/card_providers.dart';
 import 'package:re_mem_ui/features/cards/presentation/screens/decks_screen.dart';
+import 'package:re_mem_ui/features/statistics/presentation/screens/statistics_screen.dart';
+import 'package:re_mem_ui/features/statistics/presentation/providers/statistics_providers.dart';
 
 // TODO: replace with authenticated user ID once auth is implemented
 const _testUserId = 'ae87b4cc-5a57-471b-9740-837f3440db6c';
@@ -31,6 +33,22 @@ class HomeScreen extends ConsumerWidget {
         title: const Text('ReMem'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.bar_chart),
+            tooltip: 'Statistics',
+            onPressed: () {
+              final getUserStats = ref.read(getUserStatsUseCaseProvider);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => StatisticsScreen(
+                    getUserStats: getUserStats,
+                    userId: _testUserId,
+                  ),
+                ),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.style),
             tooltip: 'My Decks',
