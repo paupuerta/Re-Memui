@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 
-import '../../../cards/data/data_sources/api_config.dart';
+import '../../../../core/network/api_client.dart';
 import '../../data/data_sources/statistics_remote_data_source.dart';
 import '../../data/repositories/statistics_repository_impl.dart';
 import '../../domain/repositories/statistics_repository.dart';
@@ -19,7 +19,7 @@ final statisticsRemoteDataSourceProvider =
   final client = ref.watch(httpClientProvider);
   return StatisticsRemoteDataSource(
     client: client,
-    baseUrl: ApiConfig.baseUrl,
+    baseUrl: ApiConstants.baseUrl,
   );
 });
 

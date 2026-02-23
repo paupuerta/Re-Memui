@@ -393,3 +393,5 @@ class _DeckCardState extends ConsumerState<_DeckCard> {
     if (accuracy >= 60) return Colors.orange;
     return Colors.red;
   }
+}
+

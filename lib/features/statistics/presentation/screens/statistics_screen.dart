@@ -162,8 +162,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                 color: Colors.green.shade50,
                                 child: Padding(
                                   padding: const EdgeInsets.all(16),
-                                  child: Row(
-                                    children: const [
+                                  child: const Row(
+                                    children: [
                                       Icon(
                                         Icons.play_arrow,
                                         color: Colors.green,
