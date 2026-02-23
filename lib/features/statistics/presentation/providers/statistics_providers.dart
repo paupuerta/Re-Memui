@@ -1,26 +1,17 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:http/http.dart' as http;
 
-import '../../../../core/network/api_client.dart';
+import '../../../../core/network/network_providers.dart';
 import '../../data/data_sources/statistics_remote_data_source.dart';
 import '../../data/repositories/statistics_repository_impl.dart';
 import '../../domain/repositories/statistics_repository.dart';
 import '../../domain/use_cases/get_deck_stats.dart';
 import '../../domain/use_cases/get_user_stats.dart';
 
-/// Provider for HTTP client
-final httpClientProvider = Provider<http.Client>((ref) {
-  return http.Client();
-});
-
 /// Provider for statistics remote data source
 final statisticsRemoteDataSourceProvider =
     Provider<StatisticsRemoteDataSource>((ref) {
-  final client = ref.watch(httpClientProvider);
-  return StatisticsRemoteDataSource(
-    client: client,
-    baseUrl: ApiConstants.baseUrl,
-  );
+  final dio = ref.watch(dioProvider);
+  return StatisticsRemoteDataSource(dio: dio);
 });
 
 /// Provider for statistics repository

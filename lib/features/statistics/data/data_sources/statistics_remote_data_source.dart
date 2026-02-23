@@ -1,28 +1,21 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
 import '../models/user_stats_model.dart';
 import '../models/deck_stats_model.dart';
 
 /// Remote data source for statistics
 class StatisticsRemoteDataSource {
-  final http.Client client;
-  final String baseUrl;
+  final Dio dio;
 
   StatisticsRemoteDataSource({
-    required this.client,
-    required this.baseUrl,
+    required this.dio,
   });
 
   /// Get user statistics from API
   Future<UserStatsModel> getUserStats(String userId) async {
-    final response = await client.get(
-      Uri.parse('$baseUrl/api/v1/users/$userId/stats'),
-      headers: {'Content-Type': 'application/json'},
-    );
+    final response = await dio.get('/api/v1/users/$userId/stats');
 
     if (response.statusCode == 200) {
-      final json = jsonDecode(response.body) as Map<String, dynamic>;
-      return UserStatsModel.fromJson(json);
+      return UserStatsModel.fromJson(response.data as Map<String, dynamic>);
     } else {
       throw Exception('Failed to load user statistics: ${response.statusCode}');
     }
@@ -30,14 +23,10 @@ class StatisticsRemoteDataSource {
 
   /// Get deck statistics from API
   Future<DeckStatsModel> getDeckStats(String deckId) async {
-    final response = await client.get(
-      Uri.parse('$baseUrl/api/v1/decks/$deckId/stats'),
-      headers: {'Content-Type': 'application/json'},
-    );
+    final response = await dio.get('/api/v1/decks/$deckId/stats');
 
     if (response.statusCode == 200) {
-      final json = jsonDecode(response.body) as Map<String, dynamic>;
-      return DeckStatsModel.fromJson(json);
+      return DeckStatsModel.fromJson(response.data as Map<String, dynamic>);
     } else {
       throw Exception('Failed to load deck statistics: ${response.statusCode}');
     }
