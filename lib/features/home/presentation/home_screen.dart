@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:re_mem_ui/core/auth/auth_state.dart';
 import 'package:re_mem_ui/features/cards/presentation/providers/card_providers.dart';
 import 'package:re_mem_ui/features/cards/presentation/screens/decks_screen.dart';
 import 'package:re_mem_ui/features/statistics/presentation/screens/statistics_screen.dart';
@@ -59,6 +60,14 @@ class HomeScreen extends ConsumerWidget {
                   builder: (context) => const DecksScreen(userId: _testUserId),
                 ),
               );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: 'Log out',
+            onPressed: () async {
+              await ref.read(authStateProvider.notifier).logout();
+              if (context.mounted) context.go('/login');
             },
           ),
         ],
