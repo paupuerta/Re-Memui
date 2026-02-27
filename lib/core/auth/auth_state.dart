@@ -11,8 +11,9 @@ class AuthLoading extends AuthState {
 }
 
 class AuthAuthenticated extends AuthState {
-  const AuthAuthenticated({required this.token});
+  const AuthAuthenticated({required this.token, required this.userId});
   final String token;
+  final String userId;
 }
 
 class AuthUnauthenticated extends AuthState {
@@ -22,17 +23,26 @@ class AuthUnauthenticated extends AuthState {
 class AuthNotifier extends AsyncNotifier<AuthState> {
   @override
   Future<AuthState> build() async {
-    final token = await ref.read(tokenStorageProvider).readToken();
-    return token != null ? AuthAuthenticated(token: token) : const AuthUnauthenticated();
+    final storage = ref.read(tokenStorageProvider);
+    final token = await storage.readToken();
+    final userId = await storage.readUserId();
+    if (token != null && userId != null) {
+      return AuthAuthenticated(token: token, userId: userId);
+    }
+    return const AuthUnauthenticated();
   }
 
-  Future<void> login(String token) async {
-    await ref.read(tokenStorageProvider).saveToken(token);
-    state = AsyncData(AuthAuthenticated(token: token));
+  Future<void> login(String token, String userId) async {
+    final storage = ref.read(tokenStorageProvider);
+    await storage.saveToken(token);
+    await storage.saveUserId(userId);
+    state = AsyncData(AuthAuthenticated(token: token, userId: userId));
   }
 
   Future<void> logout() async {
-    await ref.read(tokenStorageProvider).deleteToken();
+    final storage = ref.read(tokenStorageProvider);
+    await storage.deleteToken();
+    await storage.deleteUserId();
     state = const AsyncData(AuthUnauthenticated());
   }
 }

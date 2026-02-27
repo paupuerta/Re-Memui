@@ -47,7 +47,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         _error = failure.message;
       }),
       (auth) async {
-        await ref.read(authStateProvider.notifier).login(auth.token);
+        await ref.read(authStateProvider.notifier).login(auth.token, auth.userId);
         if (mounted) context.go('/');
       },
     );

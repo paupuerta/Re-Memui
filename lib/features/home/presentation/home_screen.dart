@@ -8,13 +8,10 @@ import 'package:re_mem_ui/features/cards/presentation/screens/decks_screen.dart'
 import 'package:re_mem_ui/features/statistics/presentation/screens/statistics_screen.dart';
 import 'package:re_mem_ui/features/statistics/presentation/providers/statistics_providers.dart';
 
-// TODO: replace with authenticated user ID once auth is implemented
-const _testUserId = 'ae87b4cc-5a57-471b-9740-837f3440db6c';
-
-/// Async provider that loads all cards for the current user.
-final _userCardsProvider = FutureProvider.autoDispose((ref) async {
+/// Async provider that loads all cards for the current authenticated user.
+final _userCardsProvider = FutureProvider.autoDispose.family<dynamic, String>((ref, userId) async {
   final useCase = ref.watch(getCardsUseCaseProvider);
-  final result = await useCase(_testUserId);
+  final result = await useCase(userId);
   return result.fold(
     (failure) => throw failure,
     (cards) => cards,
@@ -27,7 +24,10 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final cardsAsync = ref.watch(_userCardsProvider);
+    final authValue = ref.watch(authStateProvider).asData?.value;
+    final userId = authValue is AuthAuthenticated ? authValue.userId : '';
+
+    final cardsAsync = ref.watch(_userCardsProvider(userId));
 
     return Scaffold(
       appBar: AppBar(
@@ -44,7 +44,7 @@ class HomeScreen extends ConsumerWidget {
                 MaterialPageRoute(
                   builder: (context) => StatisticsScreen(
                     getUserStats: getUserStats,
-                    userId: _testUserId,
+                    userId: userId,
                   ),
                 ),
               );
@@ -57,7 +57,7 @@ class HomeScreen extends ConsumerWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const DecksScreen(userId: _testUserId),
+                  builder: (context) => DecksScreen(userId: userId),
                 ),
               );
             },
@@ -98,7 +98,7 @@ class HomeScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 8),
                   TextButton.icon(
-                    onPressed: () => ref.invalidate(_userCardsProvider),
+                    onPressed: () => ref.invalidate(_userCardsProvider(userId)),
                     icon: const Icon(Icons.refresh),
                     label: const Text('Retry'),
                   ),
@@ -120,7 +120,7 @@ class HomeScreen extends ConsumerWidget {
                               extra: {
                                 'cards': cards,
                                 'index': 0,
-                                'userId': _testUserId,
+                                'userId': userId,
                               },
                             );
                           },
@@ -138,8 +138,7 @@ class HomeScreen extends ConsumerWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) =>
-                              const DecksScreen(userId: _testUserId),
+                          builder: (context) => DecksScreen(userId: userId),
                         ),
                       );
                     },
