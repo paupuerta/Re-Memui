@@ -1,3 +1,5 @@
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:re_mem_ui/features/cards/domain/entities/card.dart' as domain;
@@ -73,6 +75,125 @@ class _DeckCardsScreenState extends ConsumerState<DeckCardsScreen> {
     }
   }
 
+  Future<void> _importTsv() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['tsv', 'txt'],
+      withData: true,
+    );
+    if (result == null) return;
+
+    final file = result.files.single;
+    final filePath = kIsWeb ? null : file.path;
+    if (filePath == null && file.bytes == null) {
+      if (!mounted) return;
+      _showErrorSnackBar('Could not read the selected file');
+      return;
+    }
+
+    if (!mounted) return;
+
+    _showLoadingDialog('Importing TSV…');
+
+    final useCase = ref.read(importTsvUseCaseProvider);
+    final importResult = await useCase(
+      deckId: widget.deck.id,
+      filePath: filePath,
+      fileBytes: file.bytes,
+      fileName: file.name,
+    );
+
+    if (!mounted) return;
+    Navigator.of(context).pop(); // close loading dialog
+
+    importResult.fold(
+      (failure) => _showErrorSnackBar('Import failed: $failure'),
+      (res) {
+        _loadCards();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '${res.cardsImported} cards imported'
+              '${res.cardsSkipped > 0 ? ', ${res.cardsSkipped} skipped' : ''}',
+            ),
+            backgroundColor: Theme.of(context).colorScheme.primary,
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _importAnki() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['apkg'],
+      withData: true,
+    );
+    if (result == null) return;
+
+    final file = result.files.single;
+    final filePath = kIsWeb ? null : file.path;
+    if (filePath == null && file.bytes == null) {
+      if (!mounted) return;
+      _showErrorSnackBar('Could not read the selected file');
+      return;
+    }
+
+    if (!mounted) return;
+
+    _showLoadingDialog('Importing Anki deck…');
+
+    final useCase = ref.read(importAnkiUseCaseProvider);
+    final importResult = await useCase(
+      filePath: filePath,
+      fileBytes: file.bytes,
+      fileName: file.name,
+    );
+
+    if (!mounted) return;
+    Navigator.of(context).pop(); // close loading dialog
+
+    importResult.fold(
+      (failure) => _showErrorSnackBar('Import failed: $failure'),
+      (res) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '"${res.deckName}": ${res.cardsImported} cards imported'
+              '${res.cardsSkipped > 0 ? ', ${res.cardsSkipped} skipped' : ''}',
+            ),
+            backgroundColor: Theme.of(context).colorScheme.primary,
+          ),
+        );
+      },
+    );
+  }
+
+  void _showLoadingDialog(String message) {
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        content: Row(
+          children: [
+            const CircularProgressIndicator(),
+            const SizedBox(width: 20),
+            Expanded(child: Text(message)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Theme.of(context).colorScheme.error,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -94,6 +215,34 @@ class _DeckCardsScreenState extends ConsumerState<DeckCardsScreen> {
           ],
         ),
         elevation: 0,
+        actions: [
+          PopupMenuButton<String>(
+            tooltip: 'Import cards',
+            icon: const Icon(Icons.upload_file),
+            onSelected: (value) {
+              if (value == 'tsv') _importTsv();
+              if (value == 'anki') _importAnki();
+            },
+            itemBuilder: (_) => const [
+              PopupMenuItem(
+                value: 'tsv',
+                child: ListTile(
+                  leading: Icon(Icons.table_rows),
+                  title: Text('Import TSV'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+              PopupMenuItem(
+                value: 'anki',
+                child: ListTile(
+                  leading: Icon(Icons.archive),
+                  title: Text('Import Anki (.apkg)'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
       body: _buildBody(),
       floatingActionButton: FloatingActionButton.extended(

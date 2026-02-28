@@ -32,6 +32,9 @@ dependencies:
   # UI
   cupertino_icons: ^1.0.8
 
+  # File picking for import
+  file_picker: ^8.0.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
