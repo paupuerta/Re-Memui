@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'api_client.dart';
+import 'auth_interceptor.dart';
 
 /// Provides the configured [Dio] instance.
 final dioProvider = Provider<Dio>((ref) {
@@ -17,6 +18,7 @@ final dioProvider = Provider<Dio>((ref) {
     ),
   );
 
+  dio.interceptors.add(AuthInterceptor(ref));
   dio.interceptors.add(LogInterceptor(
     requestBody: true,
     responseBody: true,
