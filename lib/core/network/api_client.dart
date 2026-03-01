@@ -31,4 +31,25 @@ class ApiClient {
       _dio.put(path, data: data);
 
   Future<Response<T>> delete<T>(String path) => _dio.delete(path);
+
+  /// Upload a file via multipart/form-data. The file is sent under the `file` field.
+  Future<Response<T>> postMultipart<T>(
+    String path, {
+    String? filePath,
+    List<int>? fileBytes,
+    required String fileName,
+  }) async {
+    final multipartFile = fileBytes != null
+        ? MultipartFile.fromBytes(fileBytes, filename: fileName)
+        : filePath != null
+            ? await MultipartFile.fromFile(filePath, filename: fileName)
+            : throw ArgumentError(
+                'Either filePath or fileBytes must be provided.',
+              );
+
+    final formData = FormData.fromMap({
+      'file': multipartFile,
+    });
+    return _dio.post(path, data: formData);
+  }
 }
