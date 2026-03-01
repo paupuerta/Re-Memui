@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:re_mem_ui/core/services/language_detection.dart';
 
 /// Wraps [FlutterTts] for Text-to-Speech playback.
 /// Call [initialize] once before speaking.
@@ -23,25 +24,12 @@ class TtsService {
   /// Speaks [text], inferring the language from its characters.
   /// Pass an explicit [languageCode] (e.g. 'es-ES') to override detection.
   Future<void> speak(String text, {String? languageCode}) async {
-    final lang = languageCode ?? _detectLanguage(text);
+    final lang = languageCode ?? detectLanguageFromText(text);
     await _tts.setLanguage(lang);
     await _tts.speak(text);
   }
 
   Future<void> stop() async {
     await _tts.stop();
-  }
-
-  /// Heuristic: identify language from distinctive Unicode characters.
-  String _detectLanguage(String text) {
-    if (RegExp(r'[ñáéíóúüÁÉÍÓÚÜ¿¡]').hasMatch(text)) return 'es-ES';
-    if (RegExp(r'[àâæçèêëîïôœùûüÿÀÂÆÇÈÊËÎÏÔŒÙÛÜŸ]').hasMatch(text)) {
-      return 'fr-FR';
-    }
-    if (RegExp(r'[äöüßÄÖÜ]').hasMatch(text)) return 'de-DE';
-    if (RegExp(r'[\u4e00-\u9fff]').hasMatch(text)) return 'zh-CN';
-    if (RegExp(r'[\u3040-\u30ff]').hasMatch(text)) return 'ja-JP';
-    if (RegExp(r'[\uac00-\ud7af]').hasMatch(text)) return 'ko-KR';
-    return 'en-US';
   }
 }

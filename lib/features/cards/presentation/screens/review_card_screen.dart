@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:re_mem_ui/core/services/audio_providers.dart';
+import 'package:re_mem_ui/core/services/language_detection.dart';
 import 'package:re_mem_ui/features/cards/domain/entities/card.dart'
     as entities;
 import 'package:re_mem_ui/features/cards/presentation/providers/card_providers.dart';
@@ -121,7 +122,10 @@ class _ReviewCardScreenState extends ConsumerState<ReviewCardScreen> {
     }
 
     setState(() => _isListening = true);
+    // Detect the expected answer language so STT uses the correct recognizer.
+    final answerLocale = detectLanguageFromText(widget.card.answer);
     await stt.startListening(
+      localeId: answerLocale,
       onResult: (text) {
         _answerController.text = text;
         _answerController.selection = TextSelection.fromPosition(

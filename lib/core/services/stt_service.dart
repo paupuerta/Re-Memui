@@ -50,7 +50,7 @@ class SttService {
         onResult(result.recognizedWords);
         if (result.finalResult && !kIsWeb) onDone?.call();
       },
-      localeId: kIsWeb ? null : localeId,
+      localeId: localeId,
       listenOptions: kIsWeb
           ? null
           : SpeechListenOptions(listenMode: ListenMode.dictation),
