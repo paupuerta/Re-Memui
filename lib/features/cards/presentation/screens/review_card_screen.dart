@@ -1,6 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:re_mem_ui/core/services/audio_providers.dart';
 import 'package:re_mem_ui/features/cards/domain/entities/card.dart'
     as entities;
 import 'package:re_mem_ui/features/cards/presentation/providers/card_providers.dart';
@@ -30,6 +33,7 @@ class _ReviewCardScreenState extends ConsumerState<ReviewCardScreen> {
   bool _isSubmitting = false;
   String? _resultMessage;
   bool _showResult = false;
+  bool _isListening = false;
 
   bool get _hasNextCard =>
       widget.currentIndex < widget.cards.length - 1;
@@ -52,7 +56,92 @@ class _ReviewCardScreenState extends ConsumerState<ReviewCardScreen> {
   @override
   void dispose() {
     _answerController.dispose();
+    // Stop any active listening when leaving the screen.
+    ref.read(sttServiceProvider).stopListening();
     super.dispose();
+  }
+
+  Future<void> _toggleListening() async {
+    final stt = ref.read(sttServiceProvider);
+
+    if (_isListening) {
+      await stt.stopListening();
+      setState(() => _isListening = false);
+      return;
+    }
+
+    // permission_handler has no web implementation — the browser prompts
+    // natively when speech_to_text starts listening.
+    if (!kIsWeb) {
+      final micStatus = await Permission.microphone.request();
+      if (micStatus.isPermanentlyDenied) {
+        if (!mounted) return;
+        await showDialog<void>(
+          context: context,
+          builder: (_) => AlertDialog(
+            title: const Text('Microphone Access Required'),
+            content: const Text(
+              'Please enable microphone access in your device Settings to use voice dictation.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: () {
+                  openAppSettings();
+                  Navigator.of(context).pop();
+                },
+                child: const Text('Open Settings'),
+              ),
+            ],
+          ),
+        );
+        return;
+      }
+      if (!micStatus.isGranted) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Microphone permission is required')),
+        );
+        return;
+      }
+    }
+
+    final initialized = await stt.initialize();
+    if (!initialized) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Speech recognition not available on this device'),
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isListening = true);
+    await stt.startListening(
+      onResult: (text) {
+        _answerController.text = text;
+        _answerController.selection = TextSelection.fromPosition(
+          TextPosition(offset: text.length),
+        );
+      },
+      onDone: () {
+        if (mounted) setState(() => _isListening = false);
+      },
+      onError: (errorMsg) {
+        if (!mounted) return;
+        setState(() => _isListening = false);
+        final hint = errorMsg == 'not-allowed'
+            ? 'Microphone access denied — please allow it in your browser.'
+            : 'Speech recognition error: $errorMsg';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(hint)),
+        );
+      },
+    );
   }
 
   Future<void> _submitAnswer() async {
@@ -157,6 +246,21 @@ Next review in: ${reviewResult.nextReviewInDays} days
                   ),
                   filled: true,
                   fillColor: Colors.grey.shade50,
+                  suffixIcon: Padding(
+                    padding: const EdgeInsets.only(bottom: 52),
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 200),
+                      child: IconButton(
+                        key: ValueKey(_isListening),
+                        onPressed: _toggleListening,
+                        icon: Icon(
+                          _isListening ? Icons.mic : Icons.mic_none,
+                          color: _isListening ? Colors.red : null,
+                        ),
+                        tooltip: _isListening ? 'Stop listening' : 'Dictate answer',
+                      ),
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 24),
