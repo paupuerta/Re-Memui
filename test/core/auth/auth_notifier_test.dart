@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:re_mem_ui/core/auth/auth_notifier.dart';
 import 'package:re_mem_ui/core/auth/auth_state.dart';
 import 'package:re_mem_ui/core/auth/token_storage.dart';
 

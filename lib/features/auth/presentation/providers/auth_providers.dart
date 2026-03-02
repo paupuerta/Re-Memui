@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:re_mem_ui/core/auth/auth_state.dart';
 import 'package:re_mem_ui/core/network/network_providers.dart';
 import 'package:re_mem_ui/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:re_mem_ui/features/auth/domain/repositories/auth_repository.dart';

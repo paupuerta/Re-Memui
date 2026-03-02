@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:re_mem_ui/core/auth/auth_notifier.dart';
 import 'package:re_mem_ui/core/auth/auth_state.dart';
 import 'package:re_mem_ui/features/cards/presentation/providers/card_providers.dart';
 import 'package:re_mem_ui/features/cards/presentation/screens/decks_screen.dart';
