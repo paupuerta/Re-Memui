@@ -1,5 +1,5 @@
 import 'package:re_mem_ui/core/error/result.dart';
-import 'package:re_mem_ui/features/cards/domain/entities/import_result.dart';
+import 'package:re_mem_ui/features/cards/domain/entities/anki_import_result.dart';
 import 'package:re_mem_ui/features/cards/domain/repositories/import_repository.dart';
 
 /// Use case: Import cards from an Anki .apkg archive (creates a new deck).

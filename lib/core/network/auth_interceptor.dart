@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:re_mem_ui/core/auth/auth_state.dart';
+import 'package:re_mem_ui/core/auth/auth_notifier.dart';
 import 'package:re_mem_ui/core/auth/token_storage.dart';
 
 /// Dio interceptor that:

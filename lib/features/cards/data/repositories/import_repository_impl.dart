@@ -4,6 +4,7 @@ import 'package:fpdart/fpdart.dart';
 import 'package:re_mem_ui/core/error/failure.dart';
 import 'package:re_mem_ui/core/error/result.dart';
 import 'package:re_mem_ui/core/network/api_client.dart';
+import 'package:re_mem_ui/features/cards/domain/entities/anki_import_result.dart';
 import 'package:re_mem_ui/features/cards/domain/entities/import_result.dart';
 import 'package:re_mem_ui/features/cards/domain/repositories/import_repository.dart';
 
