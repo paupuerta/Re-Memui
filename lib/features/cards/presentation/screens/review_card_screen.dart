@@ -297,15 +297,20 @@ class _ReviewCardScreenState extends ConsumerState<ReviewCardScreen> {
     if (!initialized) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Speech recognition not available on this device'),
+        SnackBar(
+          content: Text(
+            stt.lastErrorMessage ??
+                'Speech recognition not available on this device',
+          ),
         ),
       );
       return;
     }
 
     setState(() => _isListening = true);
-    final answerLocale = detectLanguageFromText(_currentCard.answer);
+    final answerLocale = kIsWeb
+        ? 'en-US'
+        : detectLanguageFromText(_currentCard.answer);
     await stt.startListening(
       localeId: answerLocale,
       onResult: (text) {
@@ -320,8 +325,11 @@ class _ReviewCardScreenState extends ConsumerState<ReviewCardScreen> {
       onError: (errorMsg) {
         if (!mounted) return;
         setState(() => _isListening = false);
-        final hint = errorMsg == 'not-allowed'
+        final normalizedError = errorMsg.toLowerCase();
+        final hint = normalizedError == 'not-allowed'
             ? 'Microphone access denied — please allow it in your browser.'
+            : normalizedError == 'network'
+            ? 'Speech recognition could not start in the browser. Please try again; if it keeps failing, use Chrome and check microphone/language permissions.'
             : 'Speech recognition error: $errorMsg';
         ScaffoldMessenger.of(
           context,
