@@ -35,8 +35,9 @@ void main() {
   group('GetCardsUseCase', () {
     test('should return list of cards from repository', () async {
       // Arrange
-      when(() => mockRepository.getCards(userId))
-          .thenAnswer((_) async => Right(cards));
+      when(
+        () => mockRepository.getCards(userId),
+      ).thenAnswer((_) async => Right(cards));
 
       // Act
       final result = await useCase(userId);

@@ -15,18 +15,35 @@ class CardRepositoryImpl implements CardRepository {
   final ApiClient _apiClient;
 
   @override
-  AsyncResult<List<Card>> getCards(String userId) async {
+  AsyncResult<List<Card>> getCards(
+    String userId, {
+    int? limit,
+    int? offset,
+    List<String>? excludeCardIds,
+  }) async {
     try {
-      final response = await _apiClient.get('/users/$userId/cards');
+      final response = await _apiClient.get(
+        '/users/$userId/cards',
+        queryParameters: {
+          'limit': ?limit,
+          'offset': ?offset,
+          'exclude_card_ids':
+              ?excludeCardIds != null && excludeCardIds.isNotEmpty
+              ? excludeCardIds.join(',')
+              : null,
+        },
+      );
       final data = response.data as List<dynamic>;
       final cards = data
-          .map((json) => Card(
-                id: json['id'] as String,
-                userId: json['user_id'] as String,
-                deckId: json['deck_id'] as String?,
-                question: json['question'] as String,
-                answer: json['answer'] as String,
-              ))
+          .map(
+            (json) => Card(
+              id: json['id'] as String,
+              userId: json['user_id'] as String,
+              deckId: json['deck_id'] as String?,
+              question: json['question'] as String,
+              answer: json['answer'] as String,
+            ),
+          )
           .toList();
       return Right(cards);
     } on DioException catch (e) {
@@ -35,18 +52,35 @@ class CardRepositoryImpl implements CardRepository {
   }
 
   @override
-  AsyncResult<List<Card>> getCardsByDeck(String deckId) async {
+  AsyncResult<List<Card>> getCardsByDeck(
+    String deckId, {
+    int? limit,
+    int? offset,
+    List<String>? excludeCardIds,
+  }) async {
     try {
-      final response = await _apiClient.get('/decks/$deckId/cards');
+      final response = await _apiClient.get(
+        '/decks/$deckId/cards',
+        queryParameters: {
+          'limit': ?limit,
+          'offset': ?offset,
+          'exclude_card_ids':
+              ?excludeCardIds != null && excludeCardIds.isNotEmpty
+              ? excludeCardIds.join(',')
+              : null,
+        },
+      );
       final data = response.data as List<dynamic>;
       final cards = data
-          .map((json) => Card(
-                id: json['id'] as String,
-                userId: json['user_id'] as String,
-                deckId: json['deck_id'] as String?,
-                question: json['question'] as String,
-                answer: json['answer'] as String,
-              ))
+          .map(
+            (json) => Card(
+              id: json['id'] as String,
+              userId: json['user_id'] as String,
+              deckId: json['deck_id'] as String?,
+              question: json['question'] as String,
+              answer: json['answer'] as String,
+            ),
+          )
           .toList();
       return Right(cards);
     } on DioException catch (e) {
@@ -59,13 +93,15 @@ class CardRepositoryImpl implements CardRepository {
     try {
       final response = await _apiClient.get('/cards/$cardId');
       final json = response.data as Map<String, dynamic>;
-      return Right(Card(
-        id: json['id'] as String,
-        userId: json['user_id'] as String,
-        deckId: json['deck_id'] as String?,
-        question: json['question'] as String,
-        answer: json['answer'] as String,
-      ));
+      return Right(
+        Card(
+          id: json['id'] as String,
+          userId: json['user_id'] as String,
+          deckId: json['deck_id'] as String?,
+          question: json['question'] as String,
+          answer: json['answer'] as String,
+        ),
+      );
     } on DioException catch (e) {
       return Left(_mapDioError(e));
     }
@@ -81,20 +117,18 @@ class CardRepositoryImpl implements CardRepository {
     try {
       final response = await _apiClient.post(
         '/users/$userId/cards',
-        data: {
-          'question': question,
-          'answer': answer,
-          if (deckId != null) 'deck_id': deckId,
-        },
+        data: {'question': question, 'answer': answer, 'deck_id': ?deckId},
       );
       final json = response.data as Map<String, dynamic>;
-      return Right(Card(
-        id: json['id'] as String,
-        userId: json['user_id'] as String,
-        deckId: json['deck_id'] as String?,
-        question: json['question'] as String,
-        answer: json['answer'] as String,
-      ));
+      return Right(
+        Card(
+          id: json['id'] as String,
+          userId: json['user_id'] as String,
+          deckId: json['deck_id'] as String?,
+          question: json['question'] as String,
+          answer: json['answer'] as String,
+        ),
+      );
     } on DioException catch (e) {
       return Left(_mapDioError(e));
     }
@@ -109,20 +143,18 @@ class CardRepositoryImpl implements CardRepository {
     try {
       final response = await _apiClient.post(
         '/api/v1/reviews',
-        data: {
-          'card_id': cardId,
-          'user_id': userId,
-          'user_answer': userAnswer,
-        },
+        data: {'card_id': cardId, 'user_id': userId, 'user_answer': userAnswer},
       );
       final json = response.data as Map<String, dynamic>;
-      return Right(ReviewResult(
-        cardId: json['card_id'] as String,
-        aiScore: (json['ai_score'] as num).toDouble(),
-        fsrsRating: json['fsrs_rating'] as int,
-        validationMethod: json['validation_method'] as String,
-        nextReviewInDays: json['next_review_in_days'] as int,
-      ));
+      return Right(
+        ReviewResult(
+          cardId: json['card_id'] as String,
+          aiScore: (json['ai_score'] as num).toDouble(),
+          fsrsRating: json['fsrs_rating'] as int,
+          validationMethod: json['validation_method'] as String,
+          nextReviewInDays: json['next_review_in_days'] as int,
+        ),
+      );
     } on DioException catch (e) {
       return Left(_mapDioError(e));
     }
@@ -145,10 +177,11 @@ class CardRepositoryImpl implements CardRepository {
     return switch (e.response?.statusCode) {
       404 => const NotFoundFailure(),
       400 => const ValidationFailure(),
-      _ => e.type == DioExceptionType.connectionError ||
-              e.type == DioExceptionType.connectionTimeout
-          ? const NetworkFailure()
-          : const ServerFailure(),
+      _ =>
+        e.type == DioExceptionType.connectionError ||
+                e.type == DioExceptionType.connectionTimeout
+            ? const NetworkFailure()
+            : const ServerFailure(),
     };
   }
 }
