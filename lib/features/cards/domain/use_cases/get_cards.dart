@@ -9,6 +9,16 @@ class GetCardsUseCase {
 
   final CardRepository _repository;
 
-  AsyncResult<List<Card>> call(String userId) =>
-      _repository.getCards(userId);
+  AsyncResult<List<Card>> call(
+    String userId, {
+    String? deckId,
+    int? limit,
+    int? offset,
+  }) {
+    if (deckId != null) {
+      return _repository.getCardsByDeck(deckId, limit: limit, offset: offset);
+    }
+
+    return _repository.getCards(userId, limit: limit, offset: offset);
+  }
 }

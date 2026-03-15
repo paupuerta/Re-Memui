@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:re_mem_ui/features/cards/domain/entities/card.dart' as domain;
 import 'package:re_mem_ui/features/cards/domain/entities/deck.dart';
+import 'package:re_mem_ui/features/cards/presentation/models/review_session_config.dart';
 import 'package:re_mem_ui/features/cards/presentation/providers/card_providers.dart';
 import 'package:re_mem_ui/features/cards/presentation/screens/review_card_screen.dart';
 import 'package:re_mem_ui/features/cards/presentation/widgets/card_list_item.dart';
@@ -37,7 +38,10 @@ class _DeckCardsScreenState extends ConsumerState<DeckCardsScreen> {
     });
 
     final getCardsUseCase = ref.read(getCardsUseCaseProvider);
-    final result = await getCardsUseCase(widget.deck.userId);
+    final result = await getCardsUseCase(
+      widget.deck.userId,
+      deckId: widget.deck.id,
+    );
 
     result.fold(
       (error) {
@@ -48,10 +52,7 @@ class _DeckCardsScreenState extends ConsumerState<DeckCardsScreen> {
           });
         }
       },
-      (allCards) {
-        // Filter cards for this deck
-        final deckCards =
-            allCards.where((card) => card.deckId == widget.deck.id).toList();
+      (deckCards) {
         if (mounted) {
           setState(() {
             _cards = deckCards;
@@ -65,14 +66,12 @@ class _DeckCardsScreenState extends ConsumerState<DeckCardsScreen> {
   Future<void> _showCreateCardDialog() async {
     final result = await showDialog<domain.Card>(
       context: context,
-      builder: (context) => CreateCardDialog(
-        userId: widget.deck.userId,
-        deckId: widget.deck.id,
-      ),
+      builder: (context) =>
+          CreateCardDialog(userId: widget.deck.userId, deckId: widget.deck.id),
     );
 
     if (result != null) {
-      _loadCards();
+      await _loadCards();
     }
   }
 
@@ -207,11 +206,10 @@ class _DeckCardsScreenState extends ConsumerState<DeckCardsScreen> {
               Text(
                 widget.deck.description!,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurface
-                          .withOpacity(0.7),
-                    ),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.7),
+                ),
               ),
           ],
         ),
@@ -294,7 +292,9 @@ class _DeckCardsScreenState extends ConsumerState<DeckCardsScreen> {
             Icon(
               Icons.note_add_outlined,
               size: 64,
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+              color: Theme.of(
+                context,
+              ).colorScheme.primary.withValues(alpha: 0.5),
             ),
             const SizedBox(height: 16),
             Text(
@@ -306,11 +306,10 @@ class _DeckCardsScreenState extends ConsumerState<DeckCardsScreen> {
               'Add your first card to start learning',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onSurface
-                        .withOpacity(0.6),
-                  ),
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.6),
+              ),
             ),
           ],
         ),
@@ -331,10 +330,14 @@ class _DeckCardsScreenState extends ConsumerState<DeckCardsScreen> {
                 context,
                 MaterialPageRoute(
                   builder: (context) => ReviewCardScreen(
-                    card: card,
-                    userId: card.userId,
-                    cards: _cards,
-                    currentIndex: index,
+                    session: ReviewSessionConfig(
+                      userId: card.userId,
+                      deckId: widget.deck.id,
+                      deckName: widget.deck.name,
+                      initialCards: _cards,
+                      startIndex: index,
+                      incrementalLoading: false,
+                    ),
                   ),
                 ),
               );
@@ -346,4 +349,3 @@ class _DeckCardsScreenState extends ConsumerState<DeckCardsScreen> {
     );
   }
 }
-
