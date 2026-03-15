@@ -38,7 +38,6 @@ class _ReviewCardScreenState extends ConsumerState<ReviewCardScreen> {
   bool _isAnswerRevealed = false;
 
   int _currentIndex = 0;
-  int _offset = 0;
 
   String? _resultMessage;
   String? _loadError;
@@ -57,7 +56,6 @@ class _ReviewCardScreenState extends ConsumerState<ReviewCardScreen> {
     super.initState();
 
     _cards.addAll(widget.session.initialCards);
-    _offset = _cards.length;
     _canLoadMore =
         widget.session.incrementalLoading &&
         (_cards.isEmpty || _cards.length >= widget.session.batchSize);
@@ -116,7 +114,7 @@ class _ReviewCardScreenState extends ConsumerState<ReviewCardScreen> {
       widget.session.userId,
       deckId: widget.session.deckId,
       limit: widget.session.batchSize,
-      offset: _offset,
+      excludeCardIds: _cards.map((card) => card.id).toList(),
     );
 
     if (!mounted) {
@@ -145,7 +143,6 @@ class _ReviewCardScreenState extends ConsumerState<ReviewCardScreen> {
       (cards) {
         setState(() {
           _cards.addAll(cards);
-          _offset += cards.length;
           _canLoadMore = cards.length == widget.session.batchSize;
           _isInitializing = false;
           _isLoadingMore = false;

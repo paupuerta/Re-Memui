@@ -19,13 +19,18 @@ class CardRepositoryImpl implements CardRepository {
     String userId, {
     int? limit,
     int? offset,
+    List<String>? excludeCardIds,
   }) async {
     try {
       final response = await _apiClient.get(
         '/users/$userId/cards',
         queryParameters: {
-          if (limit != null) 'limit': limit,
-          if (offset != null) 'offset': offset,
+          'limit': ?limit,
+          'offset': ?offset,
+          'exclude_card_ids':
+              ?excludeCardIds != null && excludeCardIds.isNotEmpty
+              ? excludeCardIds.join(',')
+              : null,
         },
       );
       final data = response.data as List<dynamic>;
@@ -51,13 +56,18 @@ class CardRepositoryImpl implements CardRepository {
     String deckId, {
     int? limit,
     int? offset,
+    List<String>? excludeCardIds,
   }) async {
     try {
       final response = await _apiClient.get(
         '/decks/$deckId/cards',
         queryParameters: {
-          if (limit != null) 'limit': limit,
-          if (offset != null) 'offset': offset,
+          'limit': ?limit,
+          'offset': ?offset,
+          'exclude_card_ids':
+              ?excludeCardIds != null && excludeCardIds.isNotEmpty
+              ? excludeCardIds.join(',')
+              : null,
         },
       );
       final data = response.data as List<dynamic>;
@@ -107,11 +117,7 @@ class CardRepositoryImpl implements CardRepository {
     try {
       final response = await _apiClient.post(
         '/users/$userId/cards',
-        data: {
-          'question': question,
-          'answer': answer,
-          if (deckId != null) 'deck_id': deckId,
-        },
+        data: {'question': question, 'answer': answer, 'deck_id': ?deckId},
       );
       final json = response.data as Map<String, dynamic>;
       return Right(

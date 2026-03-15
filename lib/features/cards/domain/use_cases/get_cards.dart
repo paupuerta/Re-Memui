@@ -14,11 +14,22 @@ class GetCardsUseCase {
     String? deckId,
     int? limit,
     int? offset,
+    List<String>? excludeCardIds,
   }) {
     if (deckId != null) {
-      return _repository.getCardsByDeck(deckId, limit: limit, offset: offset);
+      return _repository.getCardsByDeck(
+        deckId,
+        limit: limit,
+        offset: offset,
+        excludeCardIds: excludeCardIds,
+      );
     }
 
-    return _repository.getCards(userId, limit: limit, offset: offset);
+    return _repository.getCards(
+      userId,
+      limit: limit,
+      offset: offset,
+      excludeCardIds: excludeCardIds,
+    );
   }
 }

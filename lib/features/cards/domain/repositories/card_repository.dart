@@ -5,11 +5,17 @@ import '../entities/review_result.dart';
 
 /// Repository contract for card operations (DIP – depend on abstraction).
 abstract interface class CardRepository {
-  AsyncResult<List<Card>> getCards(String userId, {int? limit, int? offset});
+  AsyncResult<List<Card>> getCards(
+    String userId, {
+    int? limit,
+    int? offset,
+    List<String>? excludeCardIds,
+  });
   AsyncResult<List<Card>> getCardsByDeck(
     String deckId, {
     int? limit,
     int? offset,
+    List<String>? excludeCardIds,
   });
   AsyncResult<Card> getCard(String cardId);
   AsyncResult<Card> createCard({

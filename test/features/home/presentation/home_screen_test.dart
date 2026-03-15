@@ -20,6 +20,7 @@ class _FakeCardRepository implements CardRepository {
     String userId, {
     int? limit,
     int? offset,
+    List<String>? excludeCardIds,
   }) async => const Right([]);
 
   @override
@@ -27,6 +28,7 @@ class _FakeCardRepository implements CardRepository {
     String deckId, {
     int? limit,
     int? offset,
+    List<String>? excludeCardIds,
   }) async => const Right([]);
 
   @override
