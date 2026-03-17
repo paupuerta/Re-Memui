@@ -79,94 +79,125 @@ class _DeckCardsScreenState extends ConsumerState<DeckCardsScreen> {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['tsv', 'txt'],
+      allowMultiple: true,
       withData: true,
     );
-    if (result == null) return;
-
-    final file = result.files.single;
-    final filePath = kIsWeb ? null : file.path;
-    if (filePath == null && file.bytes == null) {
-      if (!mounted) return;
-      _showErrorSnackBar('Could not read the selected file');
-      return;
-    }
+    if (result == null || result.files.isEmpty) return;
 
     if (!mounted) return;
 
     _showLoadingDialog('Importing TSV…');
 
     final useCase = ref.read(importTsvUseCaseProvider);
-    final importResult = await useCase(
-      deckId: widget.deck.id,
-      filePath: filePath,
-      fileBytes: file.bytes,
-      fileName: file.name,
-    );
+    var totalImported = 0;
+    var totalSkipped = 0;
+    final failedFiles = <String>[];
+
+    for (final file in result.files) {
+      final filePath = kIsWeb ? null : file.path;
+      if (filePath == null && file.bytes == null) {
+        failedFiles.add(file.name);
+        continue;
+      }
+
+      final importResult = await useCase(
+        deckId: widget.deck.id,
+        filePath: filePath,
+        fileBytes: file.bytes,
+        fileName: file.name,
+      );
+
+      importResult.fold(
+        (failure) => failedFiles.add(file.name),
+        (res) {
+          totalImported += res.cardsImported;
+          totalSkipped += res.cardsSkipped;
+        },
+      );
+    }
 
     if (!mounted) return;
     Navigator.of(context).pop(); // close loading dialog
 
-    importResult.fold(
-      (failure) => _showErrorSnackBar('Import failed: $failure'),
-      (res) {
-        _loadCards();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '${res.cardsImported} cards imported'
-              '${res.cardsSkipped > 0 ? ', ${res.cardsSkipped} skipped' : ''}',
-            ),
-            backgroundColor: Theme.of(context).colorScheme.primary,
+    if (totalImported == 0 && failedFiles.isNotEmpty) {
+      _showErrorSnackBar('Import failed: ${failedFiles.join(', ')}');
+    } else {
+      _loadCards();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '$totalImported cards imported'
+            '${totalSkipped > 0 ? ', $totalSkipped skipped' : ''}'
+            '${failedFiles.isNotEmpty ? ' (failed: ${failedFiles.join(', ')})' : ''}',
           ),
-        );
-      },
-    );
+          backgroundColor: Theme.of(context).colorScheme.primary,
+        ),
+      );
+    }
   }
 
   Future<void> _importAnki() async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['apkg'],
+      allowMultiple: true,
       withData: true,
     );
-    if (result == null) return;
-
-    final file = result.files.single;
-    final filePath = kIsWeb ? null : file.path;
-    if (filePath == null && file.bytes == null) {
-      if (!mounted) return;
-      _showErrorSnackBar('Could not read the selected file');
-      return;
-    }
+    if (result == null || result.files.isEmpty) return;
 
     if (!mounted) return;
 
     _showLoadingDialog('Importing Anki deck…');
 
     final useCase = ref.read(importAnkiUseCaseProvider);
-    final importResult = await useCase(
-      filePath: filePath,
-      fileBytes: file.bytes,
-      fileName: file.name,
-    );
+    var totalImported = 0;
+    var totalSkipped = 0;
+    final importedDeckNames = <String>[];
+    final failedFiles = <String>[];
+
+    for (final file in result.files) {
+      final filePath = kIsWeb ? null : file.path;
+      if (filePath == null && file.bytes == null) {
+        failedFiles.add(file.name);
+        continue;
+      }
+
+      final importResult = await useCase(
+        filePath: filePath,
+        fileBytes: file.bytes,
+        fileName: file.name,
+      );
+
+      importResult.fold(
+        (failure) => failedFiles.add(file.name),
+        (res) {
+          totalImported += res.cardsImported;
+          totalSkipped += res.cardsSkipped;
+          importedDeckNames.add(res.deckName);
+        },
+      );
+    }
 
     if (!mounted) return;
     Navigator.of(context).pop(); // close loading dialog
 
-    importResult.fold(
-      (failure) => _showErrorSnackBar('Import failed: $failure'),
-      (res) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '"${res.deckName}": ${res.cardsImported} cards imported'
-              '${res.cardsSkipped > 0 ? ', ${res.cardsSkipped} skipped' : ''}',
-            ),
-            backgroundColor: Theme.of(context).colorScheme.primary,
+    if (totalImported == 0 && failedFiles.isNotEmpty) {
+      _showErrorSnackBar('Import failed: ${failedFiles.join(', ')}');
+    } else {
+      final deckLabel = importedDeckNames.length == 1
+          ? '"${importedDeckNames.first}"'
+          : '${importedDeckNames.length} decks';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '$deckLabel: $totalImported cards imported'
+            '${totalSkipped > 0 ? ', $totalSkipped skipped' : ''}'
+            '${failedFiles.isNotEmpty ? ' (failed: ${failedFiles.join(', ')})' : ''}',
           ),
-        );
-      },
-    );
+          backgroundColor: Theme.of(context).colorScheme.primary,
+        ),
+      );
+    }
   }
 
   void _showLoadingDialog(String message) {
