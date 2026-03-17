@@ -11,15 +11,19 @@ class FlashcardWidget extends ConsumerStatefulWidget {
     required this.answer,
     this.questionLocale,
     this.answerLocale,
+    this.revealed = false,
     super.key,
   });
 
   final String question;
   final String answer;
+
   /// BCP-47 locale for TTS (e.g. 'es-ES'). Auto-detected from text when null.
   final String? questionLocale;
+
   /// BCP-47 locale for TTS (e.g. 'en-US'). Auto-detected from text when null.
   final String? answerLocale;
+  final bool revealed;
 
   @override
   ConsumerState<FlashcardWidget> createState() => _FlashcardWidgetState();
@@ -38,9 +42,10 @@ class _FlashcardWidgetState extends ConsumerState<FlashcardWidget>
       vsync: this,
       duration: const Duration(milliseconds: 600),
     );
-    _flipAnimation = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _flipAnimation = Tween<double>(
+      begin: 0,
+      end: 1,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -58,6 +63,38 @@ class _FlashcardWidgetState extends ConsumerState<FlashcardWidget>
     setState(() {
       _showingFront = !_showingFront;
     });
+  }
+
+  void _syncRevealState(bool revealed) {
+    if (revealed == _showingFront) {
+      if (revealed) {
+        _controller.forward();
+      } else {
+        _controller.reverse();
+      }
+      setState(() {
+        _showingFront = !revealed;
+      });
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant FlashcardWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.revealed != widget.revealed) {
+      _syncRevealState(widget.revealed);
+      return;
+    }
+
+    if (oldWidget.question != widget.question ||
+        oldWidget.answer != widget.answer) {
+      _controller.value = 0;
+      _showingFront = true;
+      if (widget.revealed) {
+        _syncRevealState(true);
+      }
+    }
   }
 
   Future<void> _speak(String text, String? locale) async {
@@ -82,7 +119,7 @@ class _FlashcardWidgetState extends ConsumerState<FlashcardWidget>
         builder: (context, child) {
           final angle = _flipAnimation.value * math.pi;
           final isFront = angle < math.pi / 2;
-          
+
           return Transform(
             transform: Matrix4.identity()
               ..setEntry(3, 2, 0.001)
@@ -142,7 +179,10 @@ class _FlashcardWidgetState extends ConsumerState<FlashcardWidget>
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: color,
                   borderRadius: BorderRadius.circular(20),
