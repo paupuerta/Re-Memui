@@ -24,10 +24,13 @@ class ReviewCardScreen extends ConsumerStatefulWidget {
 }
 
 class _ReviewCardScreenState extends ConsumerState<ReviewCardScreen> {
+  static const _pushToTalkActivationDelay = Duration(milliseconds: 180);
+
   final _answerController = TextEditingController();
   final _answerFocusNode = FocusNode(debugLabel: 'review-answer');
   final _reviewFocusNode = FocusNode(debugLabel: 'review-shortcuts');
   final List<entities.Card> _cards = [];
+  Timer? _pushToTalkTimer;
 
   bool _isSubmitting = false;
   bool _showResult = false;
@@ -36,6 +39,8 @@ class _ReviewCardScreenState extends ConsumerState<ReviewCardScreen> {
   bool _isLoadingMore = false;
   bool _canLoadMore = false;
   bool _isAnswerRevealed = false;
+  bool _isSpaceKeyHeld = false;
+  bool _isPushToTalkActive = false;
 
   int _currentIndex = 0;
 
@@ -54,6 +59,7 @@ class _ReviewCardScreenState extends ConsumerState<ReviewCardScreen> {
   @override
   void initState() {
     super.initState();
+    HardwareKeyboard.instance.addHandler(_handlePushToTalkKeyEvent);
 
     _cards.addAll(widget.session.initialCards);
     _canLoadMore =
@@ -70,6 +76,8 @@ class _ReviewCardScreenState extends ConsumerState<ReviewCardScreen> {
 
   @override
   void dispose() {
+    _pushToTalkTimer?.cancel();
+    HardwareKeyboard.instance.removeHandler(_handlePushToTalkKeyEvent);
     _answerController.dispose();
     _answerFocusNode.dispose();
     _reviewFocusNode.dispose();
@@ -190,6 +198,7 @@ class _ReviewCardScreenState extends ConsumerState<ReviewCardScreen> {
   }
 
   void _moveToCard(int index) {
+    _resetPushToTalkState();
     ref.read(sttServiceProvider).stopListening();
 
     setState(() {
@@ -239,6 +248,7 @@ class _ReviewCardScreenState extends ConsumerState<ReviewCardScreen> {
           _isAnswerRevealed = false;
           _answerController.clear();
         });
+        _resetPushToTalkState();
         _requestAnswerFocus();
         return KeyEventResult.handled;
       }
@@ -247,12 +257,116 @@ class _ReviewCardScreenState extends ConsumerState<ReviewCardScreen> {
     return KeyEventResult.ignored;
   }
 
+  bool _handlePushToTalkKeyEvent(KeyEvent event) {
+    if (!_shouldHandlePushToTalk ||
+        event.logicalKey != LogicalKeyboardKey.space) {
+      return false;
+    }
+
+    if (HardwareKeyboard.instance.isAltPressed ||
+        HardwareKeyboard.instance.isControlPressed ||
+        HardwareKeyboard.instance.isMetaPressed) {
+      return false;
+    }
+
+    if (event is KeyDownEvent) {
+      if (_isSpaceKeyHeld) {
+        return true;
+      }
+
+      _isSpaceKeyHeld = true;
+      _pushToTalkTimer?.cancel();
+      _pushToTalkTimer = Timer(_pushToTalkActivationDelay, () {
+        if (!mounted || !_isSpaceKeyHeld || _showResult) {
+          return;
+        }
+
+        _isPushToTalkActive = true;
+        unawaited(_startListening());
+      });
+      return true;
+    }
+
+    if (event is KeyRepeatEvent) {
+      return _isSpaceKeyHeld;
+    }
+
+    if (event is KeyUpEvent && _isSpaceKeyHeld) {
+      _isSpaceKeyHeld = false;
+      _pushToTalkTimer?.cancel();
+      _pushToTalkTimer = null;
+
+      if (_isPushToTalkActive) {
+        _isPushToTalkActive = false;
+        unawaited(_stopListening());
+      } else {
+        _insertSpaceAtSelection();
+      }
+
+      return true;
+    }
+
+    return false;
+  }
+
+  bool get _shouldHandlePushToTalk =>
+      !_showResult &&
+      !_isSubmitting &&
+      !_isInitializing &&
+      _hasLoadedCard &&
+      _answerFocusNode.hasFocus;
+
+  void _resetPushToTalkState() {
+    _pushToTalkTimer?.cancel();
+    _pushToTalkTimer = null;
+    _isSpaceKeyHeld = false;
+    _isPushToTalkActive = false;
+  }
+
+  void _insertSpaceAtSelection() {
+    if (!_answerFocusNode.hasFocus || _showResult) {
+      return;
+    }
+
+    final currentValue = _answerController.value;
+    final selection = currentValue.selection;
+
+    if (!selection.isValid) {
+      _answerController.value = TextEditingValue(
+        text: '${currentValue.text} ',
+        selection: TextSelection.collapsed(
+          offset: currentValue.text.length + 1,
+        ),
+      );
+      return;
+    }
+
+    final start = selection.start;
+    final end = selection.end;
+    final newText =
+        '${currentValue.text.substring(0, start)} ${currentValue.text.substring(end)}';
+
+    _answerController.value = TextEditingValue(
+      text: newText,
+      selection: TextSelection.collapsed(offset: start + 1),
+    );
+  }
+
   Future<void> _toggleListening() async {
-    final stt = ref.read(sttServiceProvider);
+    _resetPushToTalkState();
 
     if (_isListening) {
-      await stt.stopListening();
-      setState(() => _isListening = false);
+      await _stopListening();
+      return;
+    }
+
+    await _startListening();
+  }
+
+  Future<void> _startListening() async {
+    final stt = ref.read(sttServiceProvider);
+
+    if (_showResult || _isSubmitting || !_hasLoadedCard || _isListening) {
       return;
     }
 
@@ -293,9 +407,13 @@ class _ReviewCardScreenState extends ConsumerState<ReviewCardScreen> {
       }
     }
 
+    if (!mounted) return;
+
+    _requestAnswerFocus();
     final initialized = await stt.initialize();
     if (!initialized) {
       if (!mounted) return;
+      _resetPushToTalkState();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -320,10 +438,12 @@ class _ReviewCardScreenState extends ConsumerState<ReviewCardScreen> {
         );
       },
       onDone: () {
+        _resetPushToTalkState();
         if (mounted) setState(() => _isListening = false);
       },
       onError: (errorMsg) {
         if (!mounted) return;
+        _resetPushToTalkState();
         setState(() => _isListening = false);
         final normalizedError = errorMsg.toLowerCase();
         final hint = normalizedError == 'not-allowed'
@@ -336,6 +456,28 @@ class _ReviewCardScreenState extends ConsumerState<ReviewCardScreen> {
         ).showSnackBar(SnackBar(content: Text(hint)));
       },
     );
+  }
+
+  Future<void> _stopListening() async {
+    _resetPushToTalkState();
+
+    final stt = ref.read(sttServiceProvider);
+    try {
+      await stt.stopListening();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            stt.lastErrorMessage ?? 'Speech recognition could not be stopped.',
+          ),
+        ),
+      );
+    }
+
+    if (mounted) {
+      setState(() => _isListening = false);
+    }
   }
 
   Future<void> _submitAnswer() async {
@@ -524,7 +666,8 @@ Next review in: ${reviewResult.nextReviewInDays} days
                     textInputAction: TextInputAction.newline,
                     decoration: InputDecoration(
                       hintText: 'Type your answer here...',
-                      helperText: 'Press Shift+Enter to submit your answer.',
+                      helperText:
+                          'Hold Space to dictate. Press Shift+Enter to submit.',
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -543,7 +686,7 @@ Next review in: ${reviewResult.nextReviewInDays} days
                             ),
                             tooltip: _isListening
                                 ? 'Stop listening'
-                                : 'Dictate answer',
+                                : 'Dictate answer or hold Space',
                           ),
                         ),
                       ),
@@ -614,8 +757,11 @@ Next review in: ${reviewResult.nextReviewInDays} days
                           onPressed: () {
                             setState(() {
                               _showResult = false;
+                              _isAnswerRevealed = false;
                               _answerController.clear();
                             });
+                            _resetPushToTalkState();
+                            _requestAnswerFocus();
                           },
                           icon: const Icon(Icons.refresh),
                           label: const Text('Try Again (R)'),
